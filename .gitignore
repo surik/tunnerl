@@ -1,0 +1,9 @@
+log
+ebin
+deps
+rel
+rebar
+*~
+*.swp
+*.bak
+tags

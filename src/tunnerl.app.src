@@ -1,0 +1,17 @@
+%% -*- mode: erlang -*-
+%% ex: ft=erlang
+
+{application, tunnerl,
+ [
+  {description, "Socks5 proxy server"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  ranch, 
+                  lager
+                 ]},
+  {mod, { tunnerl_app, []}},
+  {env, []}
+ ]}.
