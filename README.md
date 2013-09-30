@@ -1,23 +1,23 @@
-tunnerl
-=======
+# tunnerl
 
 Erlang SOCKS server
 
 
-Features
---------
+### Features
 
  * SOCKS v5 
    + without authorization 
-   + only connect command
+   + connect command only
 
    
-Usage
------
+### Usage
 
-`rebar get-deps`
-`rebar compile`
+Build:
 
-edit tunnerl.config
+    $ git clone https://github.com/surik/tunnerl.git
+    $ cd tunnerl
+    $ rebar get-deps compile
 
-`./start.sh`
+Edit tunnerl.config and then:
+
+    $ ./start.sh
