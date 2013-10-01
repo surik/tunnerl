@@ -25,7 +25,7 @@ start_link(Ref, Socket, Transport, Opts) ->
 
 init(Ref, Socket, Transport, Opts) ->
     AuthMethods = proplists:get_value(auth, Opts),
-	ok = ranch:accept_ack(Ref),
+    ok = ranch:accept_ack(Ref),
     {ok, {Addr, Port}} = inet:peername(Socket),
     State = #state{auth_methods = AuthMethods, 
                    transport = Transport, 
@@ -35,7 +35,7 @@ init(Ref, Socket, Transport, Opts) ->
     try auth(State)
     catch 
         _:Reason ->
-			Transport:close(Socket),
+            Transport:close(Socket),
             lager:error("Auth error ~p", [Reason])
     end.
 
@@ -69,7 +69,7 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
         loop(NewState)
     catch 
         _:Reason ->
-			ok = Transport:close(ISocket),
+            ok = Transport:close(ISocket),
             lager:error("~p:~p command error ~p", [pretty_address(State#state.client_ip), 
                                                    State#state.client_port, Reason])
     end.
