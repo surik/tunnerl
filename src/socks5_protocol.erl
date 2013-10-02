@@ -49,7 +49,7 @@ doAuth(Data, #state{auth_methods = AuthMethods, transport = Transport, incoming_
     Addr = State#state.client_ip,
     Port = State#state.client_port,
     lager:info("~p:~p offers authentication methods: ~p", [pretty_address(Addr), Port, OfferAuthMethods]),
-    [Method | _] = lists:filtermap(fun(E) -> lists:member(E, OfferAuthMethods) end, AuthMethods),
+    [Method | _] = lists:filter(fun(E) -> lists:member(E, OfferAuthMethods) end, AuthMethods),
     % only no authentication support now
     case Method of
         ?AUTH_NOAUTH -> 
