@@ -52,33 +52,6 @@ doCmd(Cmd, State) ->
     lager:error("Command ~p not implemented yet", [Cmd]),
     {ok, State}.
 
-%loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = OSocket} = State) ->
-    %inet:setopts(ISocket, [{active, once}]),
-    %inet:setopts(OSocket, [{active, once}]),
-    %{OK, Closed, Error} = Transport:messages(),
-    %receive
-        %{OK, ISocket, Data} ->
-            %Transport:send(OSocket, Data),
-            %loop(State);
-        %{OK, OSocket, Data} ->
-            %Transport:send(ISocket, Data),
-            %loop(State);
-        %{Closed, ISocket} ->
-            %lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
-            %Transport:close(OSocket);
-        %{Closed, OSocket} ->
-            %lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
-            %Transport:close(ISocket);
-        %{Error, ISocket, Reason} ->
-            %lager:error("incoming socket: ~p", [Reason]),
-            %lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
-            %Transport:close(OSocket);
-        %{Error, OSocket, Reason} ->
-            %lager:error("outgoing socket: ~p", [Reason]),
-            %lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
-            %Transport:close(ISocket)
-    %end.
-
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================

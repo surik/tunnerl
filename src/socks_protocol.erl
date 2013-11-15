@@ -8,6 +8,7 @@
 
 -export([connect/3, 
          pretty_address/1]).
+-export([loop/1]).
 
 -include("socks.hrl").
 
@@ -43,10 +44,10 @@ loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = 
     receive
         {OK, ISocket, Data} ->
             Transport:send(OSocket, Data),
-            loop(State);
+            ?MODULE:loop(State);
         {OK, OSocket, Data} ->
             Transport:send(ISocket, Data),
-            loop(State);
+            ?MODULE:loop(State);
         {Closed, ISocket} ->
             lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
             Transport:close(OSocket);
