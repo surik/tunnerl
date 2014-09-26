@@ -3,9 +3,7 @@
 -compile([export_all]).
 
 start() ->
-    ok = application:start(lager),
-    ok = application:start(ranch),
-    ok = application:start(tunnerl).
+    {ok, _} = application:ensure_all_started(tunnerl).
     
 
 stop() ->
