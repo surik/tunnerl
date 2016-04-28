@@ -7,3 +7,6 @@ rebar
 *.swp
 *.bak
 tags
+.rebar
+_build
+erl_crash.dump
