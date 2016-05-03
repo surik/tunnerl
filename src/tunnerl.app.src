@@ -13,5 +13,9 @@
                   lager
                  ]},
   {mod, { tunnerl_app, []}},
-  {env, []}
+  {env, []},
+
+  {maintainers, ["Yury Gargay"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/surik/tunnerl"}]}
  ]}.
