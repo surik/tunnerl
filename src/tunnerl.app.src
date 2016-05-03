@@ -3,8 +3,8 @@
 
 {application, tunnerl,
  [
-  {description, "Socks5 proxy server"},
-  {vsn, "0.1.0"},
+  {description, "SOCKS4 and SOCKS5 proxy server"},
+  {vsn, "0.2.0"},
   {registered, []},
   {applications, [
                   kernel,
