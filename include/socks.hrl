@@ -4,6 +4,7 @@
     client_ip :: inet:ip_address(),
     client_port :: inet:port_number(),
     auth_methods :: list(),
+    auth_mod :: module(),
     socks4 :: boolean(),
     socks5 :: boolean(),
     transport :: module()

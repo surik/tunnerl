@@ -18,12 +18,14 @@ start_link(Ref, Socket, Transport, Opts) ->
 
 init(Ref, Socket, Transport, Opts) ->
     AuthMethods = proplists:get_value(auth, Opts),
+    AuthMod = proplists:get_value(auth_module, Opts, tunnerl_auth_dummy),
     Protocols = proplists:get_value(protocols, Opts),
     ok = ranch:accept_ack(Ref),
     {ok, {Addr, Port}} = inet:peername(Socket),
     State = #state{auth_methods = AuthMethods, 
                    socks4 = lists:member(socks4, Protocols),
                    socks5 = lists:member(socks5, Protocols),
+                   auth_mod = AuthMod,
                    transport = Transport, 
                    client_ip = Addr,
                    client_port = Port,
@@ -62,7 +64,8 @@ loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = 
             lager:error("outgoing socket: ~p", [Reason]),
             lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
             Transport:close(ISocket)
-    end.
+    end;
+loop(_) -> ok.
 
 connect(Transport, Addr, Port) ->
     connect(Transport, Addr, Port, 2).
