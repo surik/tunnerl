@@ -19,7 +19,7 @@ Build:
 
     $ git clone https://github.com/surik/tunnerl.git
     $ cd tunnerl
-    $ rebar get-deps compile
+    $ rebar3 compile
 
 Edit tunnerl.config and then:
 
