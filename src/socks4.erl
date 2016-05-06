@@ -39,7 +39,9 @@ doCmd(?CMD_CONNECT, #state{transport = Transport, incoming_socket = ISocket, aut
     {ok, <<Port:16, A:4/binary>>} = Transport:recv(ISocket, 6, ?TIMEOUT),
     Addr = list_to_tuple(binary_to_list(A)),
     {ok, User} = get_user(Transport, ISocket),
-    case AuthMod:auth(socks4, User, "", []) of
+    AuthOpts = [{client_ip, State#state.client_ip}, 
+                {client_port, State#state.client_port}],
+    case AuthMod:auth(socks4, User, "", AuthOpts) of
         ok ->
             {ok, OSocket} = socks_protocol:connect(Transport, Addr, Port),
             lager:info("~p:~p connected to ~p:~p", [socks_protocol:pretty_address(State#state.client_ip), 
