@@ -1,4 +1,4 @@
-# tunnerl
+# tunnerl [![Build Status](https://travis-ci.org/surik/tunnerl.svg?branch=master)](https://travis-ci.org/surik/tunnerl)
 
 Erlang SOCKS server
 
