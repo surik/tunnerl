@@ -4,7 +4,7 @@
 {application, tunnerl,
  [
   {description, "SOCKS4 and SOCKS5 proxy server"},
-  {vsn, "0.2.0"},
+  {vsn, "0.2.1"},
   {registered, []},
   {applications, [
                   kernel,
