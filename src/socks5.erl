@@ -33,11 +33,14 @@
 process(#state{socks5 = Socks5} = _State) when Socks5 == false ->
     lager:error("SOCKS5 unsupported."),
     socks5_not_supported;
-process(#state{socks5 = Socks5} = State) when Socks5 == true ->
+process(#state{transport = Transport, socks5 = Socks5} = State) when Socks5 == true ->
     try auth(State)
     catch 
+        _:auth_not_supported ->
+            Transport:close(State#state.incoming_socket);
+        _:no_auth ->
+            Transport:close(State#state.incoming_socket);
         _:Reason ->
-            Transport = State#state.transport,
             Transport:close(State#state.incoming_socket),
             lager:error("Auth error ~p", [Reason])
     end.
@@ -54,9 +57,10 @@ doAuth(Data, #state{auth_methods = AuthMethods, auth_mod = AuthMod,
     CPort = State#state.client_port,
     lager:info("~p:~p offers authentication methods: ~p", [socks_protocol:pretty_address(CAddr),
                                                            CPort, OfferAuthMethods]),
-    [Method | _] = lists:filter(fun(E) -> lists:member(E, OfferAuthMethods) end, AuthMethods),
-    % only no authentication support now
-    case Method of
+    Methods = lists:filter(fun(E) -> 
+                               lists:member(E, OfferAuthMethods) 
+                           end, AuthMethods) ++ [?AUTH_UNDEF],
+    case Method = hd(Methods) of
         ?AUTH_NOAUTH -> 
             Transport:send(ISocket, <<?VERSION, Method>>),
             lager:info("~p:~p Authorized with ~p type", [socks_protocol:pretty_address(CAddr), CPort, Method]),
@@ -77,11 +81,14 @@ doAuth(Data, #state{auth_methods = AuthMethods, auth_mod = AuthMod,
                     cmd(State);
                 _ -> 
                     Transport:send(ISocket, <<Version, ?REP_SERVER_ERROR>>),
+                    lager:info("~p:~p Username authorization for ~p failed", 
+                               [socks_protocol:pretty_address(State#state.client_ip),
+                                State#state.client_port, User]),
                     error(no_auth)
             end;
         _ ->
             Transport:send(ISocket, <<?VERSION, ?AUTH_UNDEF>>),
-            lager:error("~p:~p Authorization method (~p) not supported", [socks_protocol:pretty_address(CAddr),
+            lager:error("~p:~p Authorization methods (~p) not supported", [socks_protocol:pretty_address(CAddr),
                                                                           CPort, OfferAuthMethods]),
             throw(auth_not_supported)
     end.

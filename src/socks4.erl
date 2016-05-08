@@ -29,6 +29,8 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
         {ok, NewState} = doCmd(CMD, State),
         NewState
     catch 
+        _:no_auth ->
+            ok = Transport:close(ISocket);
         _:Reason ->
             ok = Transport:close(ISocket),
             lager:error("~p:~p command error ~p", [socks_protocol:pretty_address(State#state.client_ip), 
@@ -53,6 +55,8 @@ doCmd(?CMD_CONNECT, #state{transport = Transport, incoming_socket = ISocket, aut
             {ok, State#state{outgoing_socket = OSocket}};
         _ ->
             ok = Transport:send(ISocket, <<16#00, ?REP_NET_NOTAVAILABLE, Port:16, A/binary>>),
+            lager:info("~p:~p Authorization for ~p failed", [socks_protocol:pretty_address(State#state.client_ip),
+                                                             State#state.client_port, User]),
             error(no_auth)
     end;
 
