@@ -36,7 +36,7 @@ init(Ref, Socket, Transport, Opts) ->
         ?VERSION4 -> loop(socks4:process(State));
         _ -> 
             Transport:close(Socket),
-            lager:error("Unsupported SOCKS version ~p", [Version])
+            lager:debug("Unsupported SOCKS version ~p", [Version])
     end.
 
 loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = OSocket} = State) ->

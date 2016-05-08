@@ -18,7 +18,7 @@
 -define(REP_NET_NOTAVAILABLE, 16#5d).
 
 process(#state{socks4 = false} = _State) ->
-    lager:error("SOCKS4 unsupported."),
+    lager:debug("SOCKS4 unsupported."),
     socks4_not_supported;
 process(State) ->
     cmd(State).

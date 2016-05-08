@@ -31,7 +31,7 @@
 -define(REP_UNDEF, 16#FF).
 
 process(#state{socks5 = Socks5} = _State) when Socks5 == false ->
-    lager:error("SOCKS5 unsupported."),
+    lager:debug("SOCKS5 unsupported."),
     socks5_not_supported;
 process(#state{transport = Transport, socks5 = Socks5} = State) when Socks5 == true ->
     try auth(State)
@@ -40,9 +40,9 @@ process(#state{transport = Transport, socks5 = Socks5} = State) when Socks5 == t
             Transport:close(State#state.incoming_socket);
         _:no_auth ->
             Transport:close(State#state.incoming_socket);
-        _:Reason ->
+        Type:Reason ->
             Transport:close(State#state.incoming_socket),
-            lager:error("Auth error ~p", [Reason])
+            lager:error("unknown error ~p:~p", [Type, Reason])
     end.
 
 auth(#state{transport = Transport, incoming_socket = ISocket} = State) ->
@@ -88,7 +88,7 @@ doAuth(Data, #state{auth_methods = AuthMethods, auth_mod = AuthMod,
             end;
         _ ->
             Transport:send(ISocket, <<?VERSION, ?AUTH_UNDEF>>),
-            lager:error("~p:~p Authorization methods (~p) not supported", [socks_protocol:pretty_address(CAddr),
+            lager:info("~p:~p Authorization methods (~p) not supported", [socks_protocol:pretty_address(CAddr),
                                                                           CPort, OfferAuthMethods]),
             throw(auth_not_supported)
     end.
