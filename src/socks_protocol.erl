@@ -41,7 +41,7 @@ init(Ref, Socket, Transport, Opts) ->
 
 loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = OSocket} = State) ->
     inet:setopts(ISocket, [{active, once}]),
-    inet:setopts(OSocket, [{active, once}]),
+    OSocket /= undefined andalso inet:setopts(OSocket, [{active, once}]),
     {OK, Closed, Error} = Transport:messages(),
     receive
         {OK, ISocket, Data} ->
