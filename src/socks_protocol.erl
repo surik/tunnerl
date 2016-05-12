@@ -39,7 +39,9 @@ init(Ref, Socket, Transport, Opts) ->
             lager:debug("Unsupported SOCKS version ~p", [Version])
     end.
 
-loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = OSocket} = State) ->
+loop(#state{transport = Transport, 
+            incoming_socket = ISocket, 
+            outgoing_socket = OSocket} = State) ->
     inet:setopts(ISocket, [{active, once}]),
     OSocket /= undefined andalso inet:setopts(OSocket, [{active, once}]),
     {OK, Closed, Error} = Transport:messages(),
@@ -51,18 +53,22 @@ loop(#state{transport = Transport, incoming_socket = ISocket, outgoing_socket = 
             Transport:send(ISocket, Data),
             ?MODULE:loop(State);
         {Closed, ISocket} ->
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
+            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
+                                         State#state.client_port]),
             Transport:close(OSocket);
         {Closed, OSocket} ->
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
+            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
+                                         State#state.client_port]),
             Transport:close(ISocket);
         {Error, ISocket, Reason} ->
             lager:error("incoming socket: ~p", [Reason]),
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
+            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
+                                         State#state.client_port]),
             Transport:close(OSocket);
         {Error, OSocket, Reason} ->
             lager:error("outgoing socket: ~p", [Reason]),
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip), State#state.client_port]),
+            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
+                                         State#state.client_port]),
             Transport:close(ISocket)
     end;
 loop(_) -> ok.

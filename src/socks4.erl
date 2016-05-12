@@ -4,7 +4,7 @@
 
 -include("socks.hrl").
 
--define(VERSION, 16#04). % only SOCKS5
+-define(VERSION, 16#04).
 -define(RSV, 16#00).
 -define(IPV4, 16#01).
 -define(IPV6, 16#04).
@@ -33,11 +33,14 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
             ok = Transport:close(ISocket);
         _:Reason ->
             ok = Transport:close(ISocket),
-            lager:error("~p:~p command error ~p", [socks_protocol:pretty_address(State#state.client_ip), 
-                                                   State#state.client_port, Reason])
+            lager:error("~p:~p command error ~p", 
+                        [socks_protocol:pretty_address(State#state.client_ip),
+                         State#state.client_port, Reason])
     end.
 
-doCmd(?CMD_CONNECT, #state{transport = Transport, incoming_socket = ISocket, auth_mod = AuthMod} = State) ->
+doCmd(?CMD_CONNECT, #state{transport = Transport, 
+                           incoming_socket = ISocket, 
+                           auth_mod = AuthMod} = State) ->
     {ok, <<Port:16, A:4/binary>>} = Transport:recv(ISocket, 6, ?TIMEOUT),
     Addr = list_to_tuple(binary_to_list(A)),
     {ok, User} = get_user(Transport, ISocket),
@@ -46,17 +49,19 @@ doCmd(?CMD_CONNECT, #state{transport = Transport, incoming_socket = ISocket, aut
     case AuthMod:auth(socks4, User, "", AuthOpts) of
         ok ->
             {ok, OSocket} = socks_protocol:connect(Transport, Addr, Port),
-            lager:info("~p:~p connected to ~p:~p", [socks_protocol:pretty_address(State#state.client_ip), 
-                                                    State#state.client_port,
-                                                    socks_protocol:pretty_address(Addr), Port]),
+            lager:info("~p:~p connected to ~p:~p", 
+                       [socks_protocol:pretty_address(State#state.client_ip), 
+                        State#state.client_port,
+                        socks_protocol:pretty_address(Addr), Port]),
             {ok, {BAddr, BPort}} = inet:sockname(ISocket),
             BAddr2 = list_to_binary(tuple_to_list(BAddr)),
             ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr2/binary>>),
             {ok, State#state{outgoing_socket = OSocket}};
         _ ->
             ok = Transport:send(ISocket, <<16#00, ?REP_NET_NOTAVAILABLE, Port:16, A/binary>>),
-            lager:info("~p:~p Authorization for ~p failed", [socks_protocol:pretty_address(State#state.client_ip),
-                                                             State#state.client_port, User]),
+            lager:info("~p:~p Authorization for ~p failed", 
+                       [socks_protocol:pretty_address(State#state.client_ip),
+                        State#state.client_port, User]),
             error(no_auth)
     end;
 
@@ -75,7 +80,8 @@ get_user(Transport, Socket) ->
 
 get_user(Transport, Socket, User) ->
     case Transport:recv(Socket, 1, ?TIMEOUT) of
-        {ok, <<Data>>} when Data =/= 0 -> get_user(Transport, Socket, <<User/binary, Data>>);
+        {ok, <<Data>>} when Data =/= 0 -> 
+            get_user(Transport, Socket, <<User/binary, Data>>);
         {ok, <<0>>} -> {ok, User};
         _ -> {ok, ""}
     end.
