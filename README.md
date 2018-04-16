@@ -6,12 +6,12 @@ Erlang SOCKS server
 ### Features
 
  * SOCKS v4 
-   + connect command only
+   * connect command only
 
  * SOCKS v5 
-   + only username authorization 
-   + connect command only
-
+   * only username authorization 
+   * connect command only
+   * IPv4 and IPv6
    
 ### Usage
 

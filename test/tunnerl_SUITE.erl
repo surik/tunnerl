@@ -22,16 +22,21 @@
 %%%===================================================================
 
 all() ->
-    [{group, socks4_auth}, 
-     {group, socks5_auth}, 
-     {group, socks4_no_auth}, 
-     {group, socks5_no_auth}].
+    [{group, ipv4}, 
+     {group, ipv6}].
 
 groups() -> 
-    [{socks4_auth, [sequence], auth_cases()},
-     {socks5_auth, [sequence], auth_cases()},
-     {socks4_no_auth, [sequence], noauth_cases()},
-     {socks5_no_auth, [sequence], noauth_cases()}].
+    [{ipv4, [sequence], [
+                         {socks4_auth, [sequence], auth_cases()},
+                         {socks5_auth, [sequence], auth_cases()},
+                         {socks4_no_auth, [sequence], noauth_cases()},
+                         {socks5_no_auth, [sequence], noauth_cases()}
+                        ]},
+     {ipv6, [sequence], [
+                         {socks5_auth, [sequence], auth_cases()},
+                         {socks5_no_auth, [sequence], noauth_cases()}
+                        ]}
+    ].
 
 auth_cases() ->
     [unsuccesful_request_without_user, 
@@ -50,6 +55,10 @@ init_per_suite(Config) ->
 end_per_suite(_Config) ->
     ok.
 
+init_per_group(ipv4, Config) ->
+    [{family, inet} | Config];
+init_per_group(ipv6, Config) ->
+    [{family, inet6} | Config];
 init_per_group(Group, Config) when Group == socks4_auth orelse Group == socks5_auth ->
     application:set_env(tunnerl, auth_module, auth_mod),
     application:set_env(tunnerl, auth, [16#02]), % username auth for socks5
@@ -61,6 +70,8 @@ init_per_group(Group, Config) ->
     {ok, _} = application:ensure_all_started(tunnerl),
     set_type(Group, Config).
 
+end_per_group(Group, _Config) when Group == ipv4 orelse Group == ipv6 ->
+    ok;
 end_per_group(_Group, _Config) ->
     ok = application:stop(tunnerl),
     ok = application:stop(ranch),
@@ -77,20 +88,23 @@ set_type(Group, Config) ->
 get_type(Config) ->
     ?config(type, Config).
 
+get_family(Config) ->
+    ?config(family, Config).
+
 %%%===================================================================
 %%% Test cases
 %%%===================================================================
 succesful_request_without_user(Config) ->
-    true = curl:request(get_type(Config), "google.com").
+    true = curl:request(get_type(Config), get_family(Config), "google.com").
 
 succesful_request_with_available_user(Config) ->
-    true = curl:request(get_type(Config), "google.com", "user", "pass").
+    true = curl:request(get_type(Config), get_family(Config), "google.com", "user", "pass").
 
 succesful_request_with_not_available_user(Config) ->
-    true = curl:request(get_type(Config), "google.com", "user1", "pass").
+    true = curl:request(get_type(Config), get_family(Config), "google.com", "user1", "pass").
 
 unsuccesful_request_without_user(Config) ->
-    false = curl:request(get_type(Config), "google.com").
+    false = curl:request(get_type(Config), get_family(Config), "google.com").
 
 unsuccesful_request_with_not_available_user(Config) ->
-    false = curl:request(get_type(Config), "google.com", "user1", "pass").
+    false = curl:request(get_type(Config), get_family(Config), "google.com", "user1", "pass").

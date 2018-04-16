@@ -146,6 +146,7 @@ get_address_port(ATYP, Transport, Socket) ->
 parse_addr_port(?IPV4, <<Addr:4/binary, Port:16>>) ->
     {list_to_tuple(binary_to_list(Addr)), Port};
 parse_addr_port(?IPV6, <<Addr:16/binary, Port:16>>) ->
-    {list_to_tuple(binary_to_list(Addr)), Port};
+    <<A:16, B:16, C:16, D:16, E:16, F:16, G:16, H:16>> = Addr,
+    {{A,B,C,D,E,F,G,H}, Port};
 parse_addr_port(?DOMAIN, <<Len, Addr:Len/binary, Port:16>>) ->
     {binary_to_list(Addr), Port}.

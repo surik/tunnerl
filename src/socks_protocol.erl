@@ -79,10 +79,14 @@ connect(Transport, Addr, Port) ->
 connect(Transport, Addr, Port, 0) ->
     Transport:connect(Addr, Port, []);
 connect(Transport, Addr, Port, Ret) ->
-    case Transport:connect(Addr, Port, []) of
+    Opts = [inet_family(Addr)],
+    case Transport:connect(Addr, Port, Opts) of
         {ok, OSocket} -> {ok, OSocket};
         {error, _} -> connect(Transport, Addr, Port, Ret-1)
     end.
+
+inet_family({_,_,_,_}) -> inet;
+inet_family(IP) when is_tuple(IP) -> inet6.
 
 pretty_address(Addr) when is_tuple(Addr) ->
     inet_parse:ntoa(Addr);
