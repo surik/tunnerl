@@ -58,7 +58,12 @@ end_per_suite(_Config) ->
 init_per_group(ipv4, Config) ->
     [{family, inet} | Config];
 init_per_group(ipv6, Config) ->
-    [{family, inet6} | Config];
+    case os:getenv("TRAVIS_OS_NAME") of
+        "linux" ->
+            {skip, "IPv6 is not available on Travis"};
+        _ ->
+            [{family, inet6} | Config]
+    end;
 init_per_group(Group, Config) when Group == socks4_auth orelse Group == socks5_auth ->
     application:set_env(tunnerl, auth_module, auth_mod),
     application:set_env(tunnerl, auth, [16#02]), % username auth for socks5
