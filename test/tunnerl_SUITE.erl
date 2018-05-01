@@ -28,8 +28,10 @@ all() ->
 groups() -> 
     [{ipv4, [sequence], [
                          {socks4_auth, [sequence], auth_cases()},
+                         {socks4a_auth, [sequence], auth_cases()},
                          {socks5_auth, [sequence], auth_cases()},
                          {socks4_no_auth, [sequence], noauth_cases()},
+                         {socks4a_no_auth, [sequence], noauth_cases()},
                          {socks5_no_auth, [sequence], noauth_cases()}
                         ]},
      {ipv6, [sequence], [
@@ -64,7 +66,10 @@ init_per_group(ipv6, Config) ->
         _ ->
             [{family, inet6} | Config]
     end;
-init_per_group(Group, Config) when Group == socks4_auth orelse Group == socks5_auth ->
+init_per_group(Group, Config) 
+  when Group == socks4_auth orelse 
+       Group == socks5_auth orelse
+       Group == socks4a_auth ->
     application:set_env(tunnerl, auth_module, auth_mod),
     application:set_env(tunnerl, auth, [16#02]), % username auth for socks5
     {ok, _} = application:ensure_all_started(tunnerl),
@@ -84,10 +89,12 @@ end_per_group(_Group, _Config) ->
 
 set_type(Group, Config) ->
     case Group of
-        socks4_no_auth -> [{type, socks4} | Config];
-        socks5_no_auth -> [{type, socks5} | Config];
-        socks4_auth    -> [{type, socks4} | Config];
-        socks5_auth    -> [{type, socks5} | Config]
+        socks4_no_auth  -> [{type, socks4}  | Config];
+        socks4a_no_auth -> [{type, socks4a} | Config];
+        socks4_auth     -> [{type, socks4}  | Config];
+        socks4a_auth    -> [{type, socks4a} | Config];
+        socks5_no_auth  -> [{type, socks5}  | Config];
+        socks5_auth     -> [{type, socks5}  | Config]
     end.
 
 get_type(Config) ->

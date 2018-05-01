@@ -77,16 +77,18 @@ connect(Transport, Addr, Port) ->
     connect(Transport, Addr, Port, 2).
 
 connect(Transport, Addr, Port, 0) ->
-    Transport:connect(Addr, Port, []);
+    Family = inet_family(Addr),
+    Transport:connect(Addr, Port, Family);
 connect(Transport, Addr, Port, Ret) ->
-    Opts = [inet_family(Addr)],
-    case Transport:connect(Addr, Port, Opts) of
+    Family = inet_family(Addr),
+    case Transport:connect(Addr, Port, Family) of
         {ok, OSocket} -> {ok, OSocket};
         {error, _} -> connect(Transport, Addr, Port, Ret-1)
     end.
 
-inet_family({_,_,_,_}) -> inet;
-inet_family(IP) when is_tuple(IP) -> inet6.
+inet_family({_,_,_,_}) -> [inet];
+inet_family(IP) when is_tuple(IP) -> [inet6];
+inet_family(_) -> [].
 
 pretty_address(Addr) when is_tuple(Addr) ->
     inet_parse:ntoa(Addr);
