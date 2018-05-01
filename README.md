@@ -5,7 +5,7 @@ Erlang SOCKS server
 
 ### Features
 
- * SOCKS v4 
+ * SOCKS v4 and SOCKS v4A 
    * connect command only
 
  * SOCKS v5 
