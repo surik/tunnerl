@@ -21,7 +21,7 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 
 ```erlang
 {deps, [
-    {tunnerl, "0.3.1"}
+    {tunnerl, "0.4.0"}
 ]}.
 ```
 
