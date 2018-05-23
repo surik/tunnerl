@@ -1,4 +1,4 @@
--module(socks4).
+-module(tunnerl_socks4).
 
 -export([process/1]).
 
@@ -34,7 +34,7 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
         _:Reason ->
             ok = Transport:close(ISocket),
             lager:error("~p:~p command error ~p", 
-                        [socks_protocol:pretty_address(State#state.client_ip),
+                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
                          State#state.client_port, Reason])
     end.
 
@@ -49,11 +49,11 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
     case AuthMod:auth(socks4, User, "", AuthOpts) of
         ok ->
             ct:pal("~p", [Addr]),
-            {ok, OSocket} = socks_protocol:connect(Transport, Addr, Port),
+            {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
             lager:info("~p:~p connected to ~p:~p", 
-                       [socks_protocol:pretty_address(State#state.client_ip), 
+                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
                         State#state.client_port,
-                        socks_protocol:pretty_address(Addr), Port]),
+                        tunnerl_socks_protocol:pretty_address(Addr), Port]),
             {ok, {BAddr, BPort}} = inet:sockname(ISocket),
             BAddr2 = list_to_binary(tuple_to_list(BAddr)),
             ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr2/binary>>),
@@ -61,7 +61,7 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
         _ ->
             ok = Transport:send(ISocket, <<16#00, ?REP_NET_NOTAVAILABLE, Port:16, Addr0/binary>>),
             lager:info("~p:~p Authorization for ~p failed", 
-                       [socks_protocol:pretty_address(State#state.client_ip),
+                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
                         State#state.client_port, User]),
             error(no_auth)
     end;

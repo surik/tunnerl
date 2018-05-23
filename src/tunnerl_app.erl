@@ -15,7 +15,7 @@ start(_StartType, _StartArgs) ->
     Proto = application:get_env(tunnerl, protocols, 1080),
     AuthMod = application:get_env(tunnerl, auth_module, tunnerl_auth_dummy),
     Opts = [{auth, Auth}, {protocols, Proto}, {auth_module, AuthMod}],
-    {ok, _} = ranch:start_listener(tunnerl, 10, ranch_tcp, [{port, Port}], socks_protocol, Opts),
+    {ok, _} = ranch:start_listener(tunnerl, 10, ranch_tcp, [{port, Port}], tunnerl_socks_protocol, Opts),
     tunnerl_sup:start_link().
 
 stop(_State) ->

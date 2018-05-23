@@ -1,4 +1,4 @@
--module(socks_protocol).
+-module(tunnerl_socks_protocol).
 
 -behavior(ranch_protocol).
 
@@ -32,8 +32,8 @@ init(Ref, Socket, Transport, Opts) ->
                    incoming_socket = Socket},
     {ok, <<Version>>} = Transport:recv(Socket, 1, ?TIMEOUT),
     case Version of
-        ?VERSION5 -> loop(socks5:process(State));
-        ?VERSION4 -> loop(socks4:process(State));
+        ?VERSION5 -> loop(tunnerl_socks5:process(State));
+        ?VERSION4 -> loop(tunnerl_socks4:process(State));
         _ -> 
             Transport:close(Socket),
             lager:debug("Unsupported SOCKS version ~p", [Version])
