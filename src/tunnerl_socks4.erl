@@ -48,7 +48,6 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
                 {client_port, State#state.client_port}],
     case AuthMod:auth(socks4, User, "", AuthOpts) of
         ok ->
-            ct:pal("~p", [Addr]),
             {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
             lager:info("~p:~p connected to ~p:~p", 
                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 

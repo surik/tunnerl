@@ -39,7 +39,7 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
     {auth, [16#02]}, % shows that only username authorization can be accepted
     {auth_module, myapp_auth_handler},
     {acceptors, 10},
-    {ip, {0, 0, 0, 0},
+    {ip, {0, 0, 0, 0}},
     {port, 1080}
 ]}.
 ```
