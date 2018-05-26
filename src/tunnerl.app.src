@@ -9,8 +9,7 @@
   {applications, [
                   kernel,
                   stdlib,
-                  ranch, 
-                  lager
+                  ranch
                  ]},
   {mod, { tunnerl_app, []}},
   {env, []},

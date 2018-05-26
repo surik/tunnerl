@@ -31,7 +31,6 @@
 -define(REP_UNDEF, 16#FF).
 
 process(#state{socks5 = Socks5} = _State) when Socks5 == false ->
-    lager:debug("SOCKS5 unsupported."),
     socks5_not_supported;
 process(#state{transport = Transport, socks5 = Socks5} = State) 
   when Socks5 == true ->
@@ -43,7 +42,7 @@ process(#state{transport = Transport, socks5 = Socks5} = State)
             Transport:close(State#state.incoming_socket);
         Type:Reason ->
             Transport:close(State#state.incoming_socket),
-            lager:error("unknown error ~p:~p", [Type, Reason])
+            error_logger:error_msg("unknown error ~p:~p", [Type, Reason])
     end.
 
 auth(#state{transport = Transport, incoming_socket = ISocket} = State) ->
@@ -53,24 +52,16 @@ auth(#state{transport = Transport, incoming_socket = ISocket} = State) ->
 
 doAuth(Data, #state{handler = Handler} = State) ->
     OfferAuthMethods = [cast_method(Method) || Method <- binary_to_list(Data)],
-    CAddr = State#state.client_ip,
-    CPort = State#state.client_port,
-    lager:info("~p:~p offers authentication methods: ~p", 
-               [tunnerl_socks_protocol:pretty_address(CAddr),
-                CPort, OfferAuthMethods]),
     Methods = lists:filter(fun(Method) -> 
                                lists:member(Method, OfferAuthMethods) 
                            end, Handler:auth_methods()) ++ [undefined],
     doAuth_by_method(Methods, State).
 
-doAuth_by_method([noauth = Method | _], 
-                 #state{client_ip = CAddr, 
-                        client_port = CPort,
-                        transport = Transport, 
+doAuth_by_method([noauth = _Method | _], 
+                 #state{transport = Transport, 
                         incoming_socket = ISocket} = State) ->
+    % TODO: inform handler?
     Transport:send(ISocket, <<?VERSION, ?AUTH_NOAUTH>>),
-    lager:info("~p:~p Authorized with ~p type", 
-               [tunnerl_socks_protocol:pretty_address(CAddr), CPort, Method]),
     cmd(State);
 
 doAuth_by_method([username = Method | _], 
@@ -93,28 +84,18 @@ doAuth_by_method([username = Method | _],
                 source_port => CPort},
     case Handler:auth(Request) of
         accept -> 
-            lager:info("~p:~p Authorized with ~p type", 
-                       [tunnerl_socks_protocol:pretty_address(CAddr), CPort, Method]),
             Transport:send(ISocket, <<Version, ?REP_SUCCESS>>),
             cmd(State#state{username = User});
         _ -> 
             Transport:send(ISocket, <<Version, ?REP_SERVER_ERROR>>),
-            lager:info("~p:~p Username authorization for ~p failed", 
-                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
-                        State#state.client_port, User]),
             error(no_auth)
 
     end;
 
-doAuth_by_method(Methods,
-                 #state{client_ip = CAddr, 
-                        client_port = CPort,
-                        transport = Transport,
+doAuth_by_method(_Methods,
+                 #state{transport = Transport,
                         incoming_socket = ISocket} = _State) ->
     Transport:send(ISocket, <<?VERSION, ?AUTH_UNDEF>>),
-    lager:info("~p:~p Authorization methods (~p) not supported", 
-               [tunnerl_socks_protocol:pretty_address(CAddr),
-                CPort, Methods]),
     throw(auth_not_supported).
 
 cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
@@ -125,9 +106,9 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
     catch 
         _:Reason ->
             ok = Transport:close(ISocket),
-            lager:error("~p:~p command error ~p", 
-                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
-                         State#state.client_port, Reason])
+            error_logger:error_msg("~p:~p command error ~p", 
+                                   [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
+                                    State#state.client_port, Reason])
     end.
 
 doCmd(?CMD_CONNECT, ATYP, #state{transport = Transport, 
@@ -148,22 +129,15 @@ doCmd(?CMD_CONNECT, ATYP, #state{transport = Transport,
     case Handler:handle_command(Request) of
         accept ->
            {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
-            lager:info("~p:~p connected to ~p:~p", 
-                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
-                        State#state.client_port,
-                        tunnerl_socks_protocol:pretty_address(Addr), Port]),
             ok = Transport:send(ISocket, <<?VERSION, ?REP_SUCCESS, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
             {ok, State#state{outgoing_socket = OSocket}};
         reject->
             ok = Transport:send(ISocket, <<?VERSION, ?REP_NOT_ALLOWED, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
-            lager:info("~p:~p Connect failed for ~p failed", 
-                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
-                        State#state.client_port, "User"]),
             error(no_auth)
     end;
 
 doCmd(Cmd, _, State) ->
-    lager:error("Command ~p not implemented yet", [Cmd]),
+    error_logger:error_msg("Command ~p not implemented yet", [Cmd]),
     {ok, State}.
 
 %%%===================================================================

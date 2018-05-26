@@ -18,7 +18,6 @@
 -define(REP_FORBBIDEN, 16#5d).
 
 process(#state{socks4 = false} = _State) ->
-    lager:debug("SOCKS4 unsupported."),
     socks4_not_supported;
 process(State) ->
     cmd(State).
@@ -33,9 +32,9 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
             ok = Transport:close(ISocket);
         _:Reason ->
             ok = Transport:close(ISocket),
-            lager:error("~p:~p command error ~p", 
-                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
-                         State#state.client_port, Reason])
+            error_logger:error_msg("~p:~p command error ~p", 
+                                   [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
+                                    State#state.client_port, Reason])
     end.
 
 doCmd(?CMD_CONNECT, #state{transport = Transport, 
@@ -54,24 +53,17 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
     case Handler:handle_command(Request) of
         accept ->
             {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
-            lager:info("~p:~p connected to ~p:~p", 
-                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
-                        State#state.client_port,
-                        tunnerl_socks_protocol:pretty_address(Addr), Port]),
             {ok, {BAddr, BPort}} = inet:sockname(ISocket),
             BAddr2 = list_to_binary(tuple_to_list(BAddr)),
             ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr2/binary>>),
             {ok, State#state{outgoing_socket = OSocket, username = User}};
         _Other ->
             ok = Transport:send(ISocket, <<16#00, ?REP_FAILED, Port:16, Addr0/binary>>),
-            lager:info("~p:~p Authorization for ~p failed", 
-                       [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
-                        State#state.client_port, User]),
             error(no_auth)
     end;
 
 doCmd(Cmd, State) ->
-    lager:error("Command ~p not implemented yet", [Cmd]),
+    error_logger:error_msg("Command ~p not implemented yet", [Cmd]),
     {ok, State}.
 
 %%%===================================================================

@@ -33,8 +33,7 @@ init(Ref, Socket, Transport, Opts) ->
         ?VERSION5 -> loop(tunnerl_socks5:process(State));
         ?VERSION4 -> loop(tunnerl_socks4:process(State));
         _ -> 
-            Transport:close(Socket),
-            lager:debug("Unsupported SOCKS version ~p", [Version])
+            Transport:close(Socket)
     end.
 
 loop(#state{transport = Transport, 
@@ -51,22 +50,16 @@ loop(#state{transport = Transport,
             Transport:send(ISocket, Data),
             ?MODULE:loop(State);
         {Closed, ISocket} ->
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
-                                         State#state.client_port]),
+            % TODO: inform handler
             Transport:close(OSocket);
         {Closed, OSocket} ->
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
-                                         State#state.client_port]),
+            % TODO: inform handler
             Transport:close(ISocket);
-        {Error, ISocket, Reason} ->
-            lager:error("incoming socket: ~p", [Reason]),
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
-                                         State#state.client_port]),
+        {Error, _ISocket, _Reason} ->
+            % TODO: inform handler
             Transport:close(OSocket);
-        {Error, OSocket, Reason} ->
-            lager:error("outgoing socket: ~p", [Reason]),
-            lager:info("~p:~p closed!", [pretty_address(State#state.client_ip),
-                                         State#state.client_port]),
+        {Error, _OSocket, _Reason} ->
+            % TODO: inform handler
             Transport:close(ISocket)
     end;
 loop(_) -> ok.
