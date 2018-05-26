@@ -1,12 +1,17 @@
 -record(state, {
     incoming_socket :: gen_tcp:socket(),
     outgoing_socket :: gen_tcp:socket(),
+
     client_ip :: inet:ip_address(),
     client_port :: inet:port_number(),
-    auth_methods :: list(),
-    auth_mod :: module(),
+
+    username :: binary(),
+
+    handler :: module(),
+
     socks4 :: boolean(),
     socks5 :: boolean(),
+
     transport :: module()
 }).
 

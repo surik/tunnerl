@@ -31,35 +31,49 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 {applications, [tunnerl]}.
 ```
 
-3. Configure it to use custom authorization handler::
+3. Configure it to use custom handler::
 
 ```erlang
 {tunnerl, [
     {protocols, [socks4, socks5]},
-    {auth, [16#02]}, % shows that only username authorization can be accepted
-    {auth_module, myapp_auth_handler},
+    {handler, myapp_handler},
     {acceptors, 10},
     {ip, {0, 0, 0, 0}},
     {port, 1080}
 ]}.
 ```
 
-4. Implement `myapp_auth_handler`:
+4. Implement `myapp_handler`:
 
 ```erlang
--module(myapp_auth_handler).
+-module(myapp_handler).
 
-%% This simple handler module allows `user` with password `pass` 
-%% be authorized for socks4 and `root` with any password for both protocols.
-%% It rejects any other users.
+%% This simple handler module accepts username authentication and
+%% allows user with password "pass" do connect command.
+%% Also, is accepts all connections on Socks4 for "root".
 
--export([auth/4]).
+-export([auth_methods/0, 
+         auth/1, 
+         handle_command/1]).
 
-auth(socks4, <<"user">>, <<"pass">>, _Options) -> ok.
+auth_methods() -> [username].
 
-auth(_Proto, <<"root">>, _Password, _Options) -> ok.
+auth(#{username := <<"user">>, 
+       password := <<"pass">>}) -> 
+    accept;
+auth(_) -> rejected.
 
-auth(_Proto, _User, _Password, _Options) -> false.
+handle_command(#{protocol := socks4, 
+                 command := connect,
+                 username := <<"root">>}) ->
+    accept;
+handle_command(#{protocol := socks5, 
+                 command := connect,
+                 username := <<"user">>}) ->
+    accept;
+handle_command(_) -> 
+    reject.
+
 ```
 
 ### Testing
@@ -70,7 +84,7 @@ Build:
     $ cd tunnerl
     $ rebar3 compile
 
-Run tunnerl with simple predefined configuration with socks4/socks5 and no authorization:
+Run tunnerl with simple predefined configuration with socks4/socks5 and no authentication
 
     $ rebar3 shell --name socks@127.0.0.1 --config tunnerl.config --apps tunnerl
 

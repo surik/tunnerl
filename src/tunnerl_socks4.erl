@@ -2,7 +2,7 @@
 
 -export([process/1]).
 
--include("socks.hrl").
+-include("tunnerl.hrl").
 
 -define(VERSION, 16#04).
 -define(RSV, 16#00).
@@ -14,8 +14,8 @@
 
 -define(REP_SUCCESS, 16#5a).
 -define(REP_FAILED, 16#5b).
--define(REP_FORBBIDEN, 16#5c).
--define(REP_NET_NOTAVAILABLE, 16#5d).
+-define(REP_NET_NOTAVAILABLE, 16#5c).
+-define(REP_FORBBIDEN, 16#5d).
 
 process(#state{socks4 = false} = _State) ->
     lager:debug("SOCKS4 unsupported."),
@@ -40,14 +40,19 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
 
 doCmd(?CMD_CONNECT, #state{transport = Transport, 
                            incoming_socket = ISocket, 
-                           auth_mod = AuthMod} = State) ->
+                           handler = Handler} = State) ->
     {ok, <<Port:16, Addr0:4/binary>>} = Transport:recv(ISocket, 6, ?TIMEOUT),
     {ok, User} = get_user(Transport, ISocket),
     {ok, Addr} = get_addr(parse_addr(Addr0), Transport, ISocket),
-    AuthOpts = [{client_ip, State#state.client_ip}, 
-                {client_port, State#state.client_port}],
-    case AuthMod:auth(socks4, User, "", AuthOpts) of
-        ok ->
+    Request = #{protocol            => socks4,
+                command             => connect,
+                username            => User,
+                source_ip           => State#state.client_ip,
+                source_port         => State#state.client_port,
+                destination_address => Addr,
+                destination_port    => Port},
+    case Handler:handle_command(Request) of
+        accept ->
             {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
             lager:info("~p:~p connected to ~p:~p", 
                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip), 
@@ -56,9 +61,9 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
             {ok, {BAddr, BPort}} = inet:sockname(ISocket),
             BAddr2 = list_to_binary(tuple_to_list(BAddr)),
             ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr2/binary>>),
-            {ok, State#state{outgoing_socket = OSocket}};
-        _ ->
-            ok = Transport:send(ISocket, <<16#00, ?REP_NET_NOTAVAILABLE, Port:16, Addr0/binary>>),
+            {ok, State#state{outgoing_socket = OSocket, username = User}};
+        _Other ->
+            ok = Transport:send(ISocket, <<16#00, ?REP_FAILED, Port:16, Addr0/binary>>),
             lager:info("~p:~p Authorization for ~p failed", 
                        [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
                         State#state.client_port, User]),

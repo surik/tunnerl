@@ -70,13 +70,13 @@ init_per_group(Group, Config)
   when Group == socks4_auth orelse 
        Group == socks5_auth orelse
        Group == socks4a_auth ->
-    application:set_env(tunnerl, auth_module, auth_mod),
-    application:set_env(tunnerl, auth, [16#02]), % username auth for socks5
+    application:set_env(tunnerl, handler, test_handler),
+    application:set_env(tunnerl, auth, [username]),
     {ok, _} = application:ensure_all_started(tunnerl),
     set_type(Group, Config);
 init_per_group(Group, Config) ->
-    application:set_env(tunnerl, auth_module, tunnerl_auth_dummy),
-    application:set_env(tunnerl, auth, [16#00]), % no auth for socks5
+    application:set_env(tunnerl, handler, tunnerl_handler_dummy),
+    application:set_env(tunnerl, auth, [noauth]),
     {ok, _} = application:ensure_all_started(tunnerl),
     set_type(Group, Config).
 

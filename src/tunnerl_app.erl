@@ -15,11 +15,17 @@ start(_StartType, _StartArgs) ->
     NumAcceptors = application:get_env(tunnerl, acceptors, 10),
     Auth = application:get_env(tunnerl, auth, [0]),
     Proto = application:get_env(tunnerl, protocols, 1080),
-    AuthMod = application:get_env(tunnerl, auth_module, tunnerl_auth_dummy),
-    Opts = [{auth, Auth}, {protocols, Proto}, {auth_module, AuthMod}],
+    Handler = application:get_env(tunnerl, handler, tunnerl_handler_dummy),
+
+    TransportOpts = [{port, Port}, {ip, IP}],
+    Opts = [{auth, Auth}, 
+            {protocols, Proto}, 
+            {handler, Handler}],
+
     {ok, _} = ranch:start_listener(tunnerl, NumAcceptors, ranch_tcp, 
-                                   [{port, Port}, {ip, IP}], 
+                                   TransportOpts,
                                    tunnerl_socks_protocol, Opts),
+
     tunnerl_sup:start_link().
 
 stop(_State) ->

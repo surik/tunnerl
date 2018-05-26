@@ -10,22 +10,20 @@
          pretty_address/1]).
 -export([loop/1]).
 
--include("socks.hrl").
+-include("tunnerl.hrl").
 
 start_link(Ref, Socket, Transport, Opts) ->
     Pid = spawn_link(?MODULE, init, [Ref, Socket, Transport, Opts]),
     {ok, Pid}.
 
 init(Ref, Socket, Transport, Opts) ->
-    AuthMethods = proplists:get_value(auth, Opts),
-    AuthMod = proplists:get_value(auth_module, Opts, tunnerl_auth_dummy),
+    Handler = proplists:get_value(handler, Opts, tunnerl_handler_dummy),
     Protocols = proplists:get_value(protocols, Opts),
     ok = ranch:accept_ack(Ref),
     {ok, {Addr, Port}} = inet:peername(Socket),
-    State = #state{auth_methods = AuthMethods, 
-                   socks4 = lists:member(socks4, Protocols),
+    State = #state{socks4 = lists:member(socks4, Protocols),
                    socks5 = lists:member(socks5, Protocols),
-                   auth_mod = AuthMod,
+                   handler = Handler,
                    transport = Transport, 
                    client_ip = Addr,
                    client_port = Port,
