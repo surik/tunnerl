@@ -7,13 +7,13 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 
 ### Features
 
- * SOCKS v4 and SOCKS v4A 
+ * SOCKS: A protocol for TCP proxy across firewalls: [socks4](https://www.openssh.com/txt/socks4.protocol)
    * connect command only
-
- * SOCKS v5 
-   * only username authorization 
+ * SOCKS 4A: A Simple Extension to SOCKS 4 Protocol: [socks4a](https://www.openssh.com/txt/socks4a.protocol)
+ * SOCKS Protocol Version 5: [RFC1928](https://www.ietf.org/rfc/rfc1928.txt) 
    * connect command only
-   * IPv4 and IPv6
+   * Username/Password Authentication for SOCKS V5 [RFC1929](https://tools.ietf.org/rfc/rfc1929.txt)
+   * ATYPs: IPv4, IPv6 and domain
 
 ### Using
 
@@ -21,7 +21,7 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 
 ```erlang
 {deps, [
-    {tunnerl, "0.4.0"}
+    {tunnerl, "1.0.0"}
 ]}.
 ```
 
