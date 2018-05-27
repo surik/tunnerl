@@ -36,13 +36,9 @@ process(#state{transport = Transport, socks5 = Socks5} = State)
   when Socks5 == true ->
     try auth(State)
     catch 
-        _:auth_not_supported ->
-            Transport:close(State#state.incoming_socket);
-        _:no_auth ->
-            Transport:close(State#state.incoming_socket);
         Type:Reason ->
             Transport:close(State#state.incoming_socket),
-            error_logger:error_msg("unknown error ~p:~p", [Type, Reason])
+            error_logger:error_msg("socks5 protocol module got error ~p:~p", [Type, Reason])
     end.
 
 auth(#state{transport = Transport, incoming_socket = ISocket} = State) ->
@@ -82,14 +78,13 @@ doAuth_by_method([username = Method | _],
                 password    => Password,
                 source_ip   => CAddr,
                 source_port => CPort},
-    case Handler:auth(Request) of
+    case (catch Handler:auth(Request)) of
         accept -> 
             Transport:send(ISocket, <<Version, ?REP_SUCCESS>>),
             cmd(State#state{username = User});
         _ -> 
             Transport:send(ISocket, <<Version, ?REP_SERVER_ERROR>>),
             error(no_auth)
-
     end;
 
 doAuth_by_method(_Methods,
@@ -126,14 +121,15 @@ doCmd(?CMD_CONNECT, ATYP, #state{transport = Transport,
                 destination_port    => Port},
     {ok, {BAddr, BPort}} = inet:sockname(ISocket),
     BAddr2 = list_to_binary(tuple_to_list(BAddr)),
-    case Handler:handle_command(Request) of
+    case (catch Handler:handle_command(Request)) of
         accept ->
-           {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
-            ok = Transport:send(ISocket, <<?VERSION, ?REP_SUCCESS, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
-            {ok, State#state{outgoing_socket = OSocket}};
+            do_connect(Addr, Port, BAddr2, BPort, State#state{username = User});
         reject->
             ok = Transport:send(ISocket, <<?VERSION, ?REP_NOT_ALLOWED, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
-            error(no_auth)
+            error(no_allowed);
+        _ ->
+            ok = Transport:send(ISocket, <<?VERSION, ?REP_SERVER_ERROR, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
+            error(server_error)
     end;
 
 doCmd(Cmd, _, State) ->
@@ -149,6 +145,27 @@ cast_method(?AUTH_USERNAME) -> username;
 cast_method(?AUTH_UNDEF)    -> undefined;
 cast_method(Number)
   when is_integer(Number) -> Number.
+
+do_connect(Addr, Port, SAddr, SPort, 
+           #state{transport = Transport, 
+                  incoming_socket= ISocket} = State) ->
+    case tunnerl_socks_protocol:connect(Transport, Addr, Port) of
+        {ok, OSocket} ->
+            ok = Transport:send(ISocket, <<?VERSION, ?REP_SUCCESS, ?RSV, ?IPV4, SAddr/binary, SPort:16>>),
+            {ok, State#state{outgoing_socket = OSocket}};
+        {error, Error0} ->
+            Error = connect_error_map(Error0),
+            ok = Transport:send(ISocket, <<?VERSION, Error, ?RSV, ?IPV4, SAddr/binary, SPort:16>>),
+            error(Error0);
+        _e ->
+            ok = Transport:send(ISocket, <<16#00, ?REP_SERVER_ERROR, SPort:16, SAddr/binary>>),
+            error(server_error)
+    end.
+
+connect_error_map(ehostunreach) -> ?REP_HOST_UNREACHABLE;
+connect_error_map(enetunreach)  -> ?REP_NET_UNREACHABLE;
+connect_error_map(erefused)     -> ?REP_CONN_REFUSED;
+connect_error_map(_)            -> ?REP_SERVER_ERROR.
 
 get_address_port(ATYP, Transport, Socket) ->
     case ATYP of
