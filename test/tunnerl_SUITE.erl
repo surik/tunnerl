@@ -13,7 +13,8 @@
          succesful_request_with_available_user/1, 
          succesful_request_with_not_available_user/1, 
          unsuccesful_request_without_user/1,
-         unsuccesful_request_with_not_available_user/1]).
+         unsuccesful_request_with_not_available_user/1,
+         unsuccesful_request_with_wrong_ip/1]).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -48,7 +49,8 @@ auth_cases() ->
 noauth_cases() ->
     [succesful_request_without_user, 
      succesful_request_with_available_user, 
-     succesful_request_with_not_available_user].
+     succesful_request_with_not_available_user,
+     unsuccesful_request_with_wrong_ip].
 
 init_per_suite(Config) ->
     application:set_env(tunnerl, protocols, [socks4, socks5]),
@@ -120,3 +122,6 @@ unsuccesful_request_without_user(Config) ->
 
 unsuccesful_request_with_not_available_user(Config) ->
     false = curl:request(get_type(Config), get_family(Config), "google.com", "user1", "pass").
+
+unsuccesful_request_with_wrong_ip(Config) ->
+    false = curl:request(get_type(Config), get_family(Config), "127.0.0.1", "user1", "pass").

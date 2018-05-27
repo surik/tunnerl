@@ -28,13 +28,10 @@ cmd(#state{transport = Transport, incoming_socket = ISocket} = State) ->
         {ok, NewState} = doCmd(CMD, State),
         NewState
     catch 
-        _:no_auth ->
-            ok = Transport:close(ISocket);
-        _:Reason ->
+        Type:Reason ->
             ok = Transport:close(ISocket),
-            error_logger:error_msg("~p:~p command error ~p", 
-                                   [tunnerl_socks_protocol:pretty_address(State#state.client_ip),
-                                    State#state.client_port, Reason])
+            error_logger:error_msg("socks4 protocol module got error ~p:~p", 
+                                   [Type, Reason])
     end.
 
 doCmd(?CMD_CONNECT, #state{transport = Transport, 
@@ -50,16 +47,12 @@ doCmd(?CMD_CONNECT, #state{transport = Transport,
                 source_port         => State#state.client_port,
                 destination_address => Addr,
                 destination_port    => Port},
-    case Handler:handle_command(Request) of
+    case (catch Handler:handle_command(Request)) of
         accept ->
-            {ok, OSocket} = tunnerl_socks_protocol:connect(Transport, Addr, Port),
-            {ok, {BAddr, BPort}} = inet:sockname(ISocket),
-            BAddr2 = list_to_binary(tuple_to_list(BAddr)),
-            ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr2/binary>>),
-            {ok, State#state{outgoing_socket = OSocket, username = User}};
+            do_connect(Addr, Port, Addr0, Port, State#state{username = User});
         _Other ->
             ok = Transport:send(ISocket, <<16#00, ?REP_FAILED, Port:16, Addr0/binary>>),
-            error(no_auth)
+            error(failed)
     end;
 
 doCmd(Cmd, State) ->
@@ -69,6 +62,18 @@ doCmd(Cmd, State) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+do_connect(Addr, Port, BAddr, BPort,
+           #state{transport = Transport, 
+                              incoming_socket= ISocket} = State) ->
+    case tunnerl_socks_protocol:connect(Transport, Addr, Port) of
+        {ok, OSocket} ->
+            ok = Transport:send(ISocket, <<16#00, ?REP_SUCCESS, BPort:16, BAddr/binary>>),
+            {ok, State#state{outgoing_socket = OSocket}};
+        _e ->
+            ok = Transport:send(ISocket, <<16#00, ?REP_FAILED, BPort:16, BAddr/binary>>),
+            error(failed)
+    end.
+
 parse_addr(<<0,0,0,_:1/binary>>) -> socks4a;
 parse_addr(A) ->
     list_to_tuple(binary_to_list(A)).
