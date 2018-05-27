@@ -12,15 +12,24 @@ auth_methods() ->
 auth(#{username := <<"user">>, 
        password := <<"pass">>}) -> 
     accept;
+auth(#{username := <<"throw2">>, 
+       password := <<"pass">>}) -> 
+    accept;
+auth(#{username := <<"throw">>}) -> 
+    throw(error);
 auth(_) -> rejected.
 
+handle_command(#{protocol := _socks4and5, 
+                 command := connect,
+                 username := <<"user">>}) ->
+    accept;
 handle_command(#{protocol := socks4, 
                  command := connect,
-                 username := <<"user">>}) ->
-    accept;
-handle_command(#{protocol := socks5, 
+                 username := <<"throw">>}) ->
+    throw(error);
+handle_command(#{protocol := _socks4and5, 
                  command := connect,
-                 username := <<"user">>}) ->
-    accept;
+                 username := <<"throw2">>}) ->
+    throw(error);
 handle_command(_) -> 
     reject.

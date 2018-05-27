@@ -14,7 +14,9 @@
          succesful_request_with_not_available_user/1, 
          unsuccesful_request_without_user/1,
          unsuccesful_request_with_not_available_user/1,
-         unsuccesful_request_with_wrong_ip/1]).
+         unsuccesful_request_with_wrong_ip/1,
+         unsuccesful_request_handler_crash_on_auth/1,
+         unsuccesful_request_handler_crash_on_cmd/1]).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -44,7 +46,10 @@ groups() ->
 auth_cases() ->
     [unsuccesful_request_without_user, 
      succesful_request_with_available_user, 
-     unsuccesful_request_with_not_available_user].
+     unsuccesful_request_with_not_available_user,
+     unsuccesful_request_with_wrong_ip,
+     unsuccesful_request_handler_crash_on_auth,
+     unsuccesful_request_handler_crash_on_cmd].
 
 noauth_cases() ->
     [succesful_request_without_user, 
@@ -124,4 +129,10 @@ unsuccesful_request_with_not_available_user(Config) ->
     false = curl:request(get_type(Config), get_family(Config), "google.com", "user1", "pass").
 
 unsuccesful_request_with_wrong_ip(Config) ->
-    false = curl:request(get_type(Config), get_family(Config), "127.0.0.1", "user1", "pass").
+    false = curl:request(get_type(Config), get_family(Config), "127.0.0.1", "user", "pass").
+
+unsuccesful_request_handler_crash_on_auth(Config) ->
+    false = curl:request(get_type(Config), get_family(Config), "google.com", "throw", "pass").
+
+unsuccesful_request_handler_crash_on_cmd(Config) ->
+    false = curl:request(get_type(Config), get_family(Config), "google.com", "throw2", "pass").
