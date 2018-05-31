@@ -119,16 +119,15 @@ doCmd(?CMD_CONNECT, ATYP, #state{transport = Transport,
                 source_port         => State#state.client_port,
                 destination_address => Addr,
                 destination_port    => Port},
-    {ok, {BAddr, BPort}} = inet:sockname(ISocket),
-    BAddr2 = list_to_binary(tuple_to_list(BAddr)),
+    {BAddr, BPort} = get_binary_ip_port(ISocket),
     case (catch Handler:handle_command(Request)) of
         accept ->
-            do_connect(Addr, Port, BAddr2, BPort, State#state{username = User});
+            do_connect(Addr, Port, BAddr, BPort, State#state{username = User});
         reject->
-            ok = Transport:send(ISocket, <<?VERSION, ?REP_NOT_ALLOWED, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
+            ok = Transport:send(ISocket, <<?VERSION, ?REP_NOT_ALLOWED, ?RSV, ?IPV4, BAddr/binary, BPort:16>>),
             error(no_allowed);
         _ ->
-            ok = Transport:send(ISocket, <<?VERSION, ?REP_SERVER_ERROR, ?RSV, ?IPV4, BAddr2/binary, BPort:16>>),
+            ok = Transport:send(ISocket, <<?VERSION, ?REP_SERVER_ERROR, ?RSV, ?IPV4, BAddr/binary, BPort:16>>),
             error(server_error)
     end;
 
@@ -175,8 +174,15 @@ get_address_port(ATYP, Transport, Socket) ->
             {ok, <<DLen>>} = Transport:recv(Socket, 1, ?TIMEOUT),
             {ok, AddrPort} = Transport:recv(Socket, DLen+2, ?TIMEOUT),
             {ok, <<DLen, AddrPort/binary>>};
-        true -> throw(unknown_atyp)
+        true -> 
+            {BAddr, BPort} = get_binary_ip_port(Socket),
+            ok = Transport:send(Socket, <<?VERSION, ?REP_ATYP_NOSUPPORTED, ?RSV, ?IPV4, BAddr/binary, BPort:16>>),
+            throw(unknown_atyp)
     end.
+
+get_binary_ip_port(Socket) ->
+    {ok, {BAddr, BPort}} = inet:sockname(Socket),
+    {list_to_binary(tuple_to_list(BAddr)), BPort}.
 
 parse_addr_port(?IPV4, <<Addr:4/binary, Port:16>>) ->
     {list_to_tuple(binary_to_list(Addr)), Port};
