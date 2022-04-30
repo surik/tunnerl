@@ -3,28 +3,28 @@
 -behavior(ranch_protocol).
 
 %% ranch_protocol callbacks
--export([start_link/4, 
-         init/4]).
+-export([start_link/3,
+         init/3]).
 
--export([connect/3, 
+-export([connect/3,
          pretty_address/1]).
 -export([loop/1]).
 
 -include("tunnerl.hrl").
 
-start_link(Ref, Socket, Transport, Opts) ->
-    Pid = spawn_link(?MODULE, init, [Ref, Socket, Transport, Opts]),
+start_link(Ref, Transport, Opts) ->
+    Pid = spawn_link(?MODULE, init, [Ref, Transport, Opts]),
     {ok, Pid}.
 
-init(Ref, Socket, Transport, Opts) ->
+init(Ref, Transport, Opts) ->
     Handler = proplists:get_value(handler, Opts, tunnerl_handler_dummy),
     Protocols = proplists:get_value(protocols, Opts),
-    ok = ranch:accept_ack(Ref),
+    {ok, Socket} = ranch:handshake(Ref),
     {ok, {Addr, Port}} = inet:peername(Socket),
     State = #state{socks4 = lists:member(socks4, Protocols),
                    socks5 = lists:member(socks5, Protocols),
                    handler = Handler,
-                   transport = Transport, 
+                   transport = Transport,
                    client_ip = Addr,
                    client_port = Port,
                    incoming_socket = Socket},
@@ -32,16 +32,16 @@ init(Ref, Socket, Transport, Opts) ->
     case Version of
         ?VERSION5 -> loop(tunnerl_socks5:process(State));
         ?VERSION4 -> loop(tunnerl_socks4:process(State));
-        _ -> 
+        _ ->
             Transport:close(Socket)
     end.
 
-loop(#state{transport = Transport, 
-            incoming_socket = ISocket, 
+loop(#state{transport = Transport,
+            incoming_socket = ISocket,
             outgoing_socket = OSocket} = State) ->
     inet:setopts(ISocket, [{active, once}]),
     OSocket /= undefined andalso inet:setopts(OSocket, [{active, once}]),
-    {OK, Closed, Error} = Transport:messages(),
+    {OK, Closed, Error, _Passive} = Transport:messages(),
     receive
         {OK, ISocket, Data} ->
             Transport:send(OSocket, Data),
@@ -60,7 +60,9 @@ loop(#state{transport = Transport,
             Transport:close(OSocket);
         {Error, _OSocket, _Reason} ->
             % TODO: inform handler
-            Transport:close(ISocket)
+            Transport:close(ISocket);
+        Other ->
+            io:format("~p~n", [Other])
     end;
 loop(_) -> ok.
 

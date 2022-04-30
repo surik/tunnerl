@@ -17,12 +17,12 @@ start(_StartType, _StartArgs) ->
     Proto = application:get_env(tunnerl, protocols, 1080),
     Handler = application:get_env(tunnerl, handler, tunnerl_handler_dummy),
 
-    TransportOpts = [{port, Port}, {ip, IP}],
-    Opts = [{auth, Auth}, 
-            {protocols, Proto}, 
+    TransportOpts = #{socket_opts => [{port, Port}, {ip, IP}], num_acceptors => NumAcceptors},
+    Opts = [{auth, Auth},
+            {protocols, Proto},
             {handler, Handler}],
 
-    {ok, _} = ranch:start_listener(tunnerl, NumAcceptors, ranch_tcp, 
+    {ok, _} = ranch:start_listener(tunnerl, ranch_tcp,
                                    TransportOpts,
                                    tunnerl_socks_protocol, Opts),
 
