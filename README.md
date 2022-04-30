@@ -1,6 +1,6 @@
 # tunnerl
 
-[![Build Status](https://travis-ci.org/surik/tunnerl.svg?branch=master)](https://travis-ci.org/surik/tunnerl)
+[![Build Status](https://github.com/surik/tunnerl/actions/workflows/ci.yml/badge.svg)](https://github.com/surik/tunnerl/actions/workflows/ci.yml)
 
 SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 
