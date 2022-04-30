@@ -1,4 +1,4 @@
-# tunnerl 
+# tunnerl
 
 [![Build Status](https://travis-ci.org/surik/tunnerl.svg?branch=master)](https://travis-ci.org/surik/tunnerl)
 
@@ -10,7 +10,7 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
  * SOCKS: A protocol for TCP proxy across firewalls: [socks4](https://www.openssh.com/txt/socks4.protocol)
    * connect command only
  * SOCKS 4A: A Simple Extension to SOCKS 4 Protocol: [socks4a](https://www.openssh.com/txt/socks4a.protocol)
- * SOCKS Protocol Version 5: [RFC1928](https://www.ietf.org/rfc/rfc1928.txt) 
+ * SOCKS Protocol Version 5: [RFC1928](https://www.ietf.org/rfc/rfc1928.txt)
    * connect command only
    * Username/Password Authentication for SOCKS V5 [RFC1929](https://tools.ietf.org/rfc/rfc1929.txt)
    * ATYPs: IPv4, IPv6 and domain
@@ -52,26 +52,26 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 %% allows user with password "pass" do connect command.
 %% Also, is accepts all connections on Socks4 for "root".
 
--export([auth_methods/0, 
-         auth/1, 
+-export([auth_methods/0,
+         auth/1,
          handle_command/1]).
 
 auth_methods() -> [username].
 
-auth(#{username := <<"user">>, 
-       password := <<"pass">>}) -> 
+auth(#{username := <<"user">>,
+       password := <<"pass">>}) ->
     accept;
-auth(_) -> rejected.
+auth(_) -> reject.
 
-handle_command(#{protocol := socks4, 
+handle_command(#{protocol := socks4,
                  command := connect,
                  username := <<"root">>}) ->
     accept;
-handle_command(#{protocol := socks5, 
+handle_command(#{protocol := socks5,
                  command := connect,
                  username := <<"user">>}) ->
     accept;
-handle_command(_) -> 
+handle_command(_) ->
     reject.
 
 ```
