@@ -9,9 +9,9 @@
          end_per_group/2]).
 
 %% Test cases
--export([succesful_request_without_user/1, 
-         succesful_request_with_available_user/1, 
-         succesful_request_with_not_available_user/1, 
+-export([succesful_request_without_user/1,
+         succesful_request_with_available_user/1,
+         succesful_request_with_not_available_user/1,
          unsuccesful_request_without_user/1,
          unsuccesful_request_with_not_available_user/1,
          unsuccesful_request_with_wrong_ip/1,
@@ -25,10 +25,10 @@
 %%%===================================================================
 
 all() ->
-    [{group, ipv4}, 
+    [{group, ipv4},
      {group, ipv6}].
 
-groups() -> 
+groups() ->
     [{ipv4, [sequence], [
                          {socks4_auth, [sequence], auth_cases()},
                          {socks4a_auth, [sequence], auth_cases()},
@@ -44,16 +44,16 @@ groups() ->
     ].
 
 auth_cases() ->
-    [unsuccesful_request_without_user, 
-     succesful_request_with_available_user, 
+    [unsuccesful_request_without_user,
+     succesful_request_with_available_user,
      unsuccesful_request_with_not_available_user,
      unsuccesful_request_with_wrong_ip,
      unsuccesful_request_handler_crash_on_auth,
      unsuccesful_request_handler_crash_on_cmd].
 
 noauth_cases() ->
-    [succesful_request_without_user, 
-     succesful_request_with_available_user, 
+    [succesful_request_without_user,
+     succesful_request_with_available_user,
      succesful_request_with_not_available_user,
      unsuccesful_request_with_wrong_ip].
 
@@ -67,14 +67,14 @@ end_per_suite(_Config) ->
 init_per_group(ipv4, Config) ->
     [{family, inet} | Config];
 init_per_group(ipv6, Config) ->
-    case os:getenv("TRAVIS_OS_NAME") of
-        "linux" ->
-            {skip, "IPv6 is not available on Travis"};
+    case os:getenv("CI") of
+        "true" ->
+            {skip, "IPv6 is not available on CI"};
         _ ->
             [{family, inet6} | Config]
     end;
-init_per_group(Group, Config) 
-  when Group == socks4_auth orelse 
+init_per_group(Group, Config)
+  when Group == socks4_auth orelse
        Group == socks5_auth orelse
        Group == socks4a_auth ->
     application:set_env(tunnerl, handler, test_handler),
