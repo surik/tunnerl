@@ -6,8 +6,8 @@ jobs:
     name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
     strategy:
       matrix:
-        otp: ['22.3', '23.3', '24.3']
-        rebar3: ['3.18.0']
+        otp: ['22.3', '23.3', '24.3', '25.1']
+        rebar3: ['3.20.0']
     steps:
       - uses: actions/checkout@v2
       - uses: erlef/setup-beam@v1
