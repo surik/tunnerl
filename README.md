@@ -1,21 +1,27 @@
-# tunnerl
+# Tunnerl - SOCKS Proxy Implementation in Erlang/OTP
 
 [![Build Status](https://github.com/surik/tunnerl/actions/workflows/ci.yml/badge.svg)](https://github.com/surik/tunnerl/actions/workflows/ci.yml)
 
-SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
-
+Tunnerl is a versatile SOCKS4, SOCKS4a, and SOCKS5 proxy protocol implementation in Erlang/OTP. 
+It enables you to create a powerful and flexible proxy server to facilitate secure and efficient communication across various network environments.
 
 ### Features
 
- * SOCKS: A protocol for TCP proxy across firewalls: [socks4](https://www.openssh.com/txt/socks4.protocol)
-   * connect command only
- * SOCKS 4A: A Simple Extension to SOCKS 4 Protocol: [socks4a](https://www.openssh.com/txt/socks4a.protocol)
- * SOCKS Protocol Version 5: [RFC1928](https://www.ietf.org/rfc/rfc1928.txt)
-   * connect command only
-   * Username/Password Authentication for SOCKS V5 [RFC1929](https://tools.ietf.org/rfc/rfc1929.txt)
-   * ATYPs: IPv4, IPv6 and domain
+`tunnerl`  offers a range of features for proxying TCP connections, making it a valuable tool for network communication.
+These features include:
 
-### Using
+- **SOCKS Protocol Support**:
+  - SOCKS4: A protocol for TCP proxy across firewalls ([socks4.protocol](https://www.openssh.com/txt/socks4.protocol)).
+    - Supports the `connect` command only.
+  - SOCKS 4A: A Simple Extension to SOCKS 4 Protocol ([socks4a.protocol](https://www.openssh.com/txt/socks4a.protocol)).
+  - SOCKS Protocol Version 5 ([RFC1928](https://www.ietf.org/rfc/rfc1928.txt)):
+    - Supports the `connect` command only.
+    - Username/Password Authentication for SOCKS V5 ([RFC1929](https://tools.ietf.org/rfc/rfc1929.txt)).
+    - ATYPs: IPv4, IPv6, and domain.
+
+### Getting Started
+
+Follow these steps to integrate Tunnerl into your Erlang or Elixir application:
 
 1. Add `tunnerl` to your list of dependencies in rebar.config:
 
@@ -31,7 +37,7 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 {applications, [tunnerl]}.
 ```
 
-3. Configure it to use custom handler::
+3. Configure `tunnerl` to use custom handler::
 
 ```erlang
 {tunnerl, [
@@ -43,7 +49,8 @@ SOCKS4, SOCKS4a and SOCKS5 protocols implementation in Erlang/OTP.
 ]}.
 ```
 
-4. Implement `myapp_handler`:
+4. Implement your own `myapp_handler` module. 
+This module defines how `tunnerl` handles authentication and connection requests based on your application's requirements.
 
 ```erlang
 -module(myapp_handler).
@@ -73,23 +80,30 @@ handle_command(#{protocol := socks5,
     accept;
 handle_command(_) ->
     reject.
-
 ```
 
 ### Testing
 
-Build:
+To test `tunnerl`, follow these steps:
 
-    $ git clone https://github.com/surik/tunnerl.git
-    $ cd tunnerl
-    $ rebar3 compile
+1. Clone the `tunnerl` repository and compile the code:
 
-Run tunnerl with simple predefined configuration with socks4/socks5 and no authentication
+```
+$ git clone https://github.com/surik/tunnerl.git
+$ cd tunnerl
+$ rebar3 compile
+```
 
-    $ rebar3 shell --name socks@127.0.0.1 --config tunnerl.config --apps tunnerl
+2. Run Tunnerl with a predefined configuration that includes SOCKS4 and SOCKS5 support with no authentication:
 
-There is a bunch of common tests which can be running:
+```
+$ rebar3 shell --name socks@127.0.0.1 --config tunnerl.config --apps tunnerl
+```
 
-    $ rebar3 ct
+3. You can run a series of common tests to ensure everything is working as expected:
 
-**Note** that IPv6 tests might not been working on your local machine.
+```
+$ rebar3 ct
+```
+
+**Note**: IPv6 tests may not work on all local machines.
