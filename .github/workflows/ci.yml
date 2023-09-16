@@ -6,13 +6,14 @@ jobs:
     name: Erlang/OTP ${{matrix.otp}} / rebar3 ${{matrix.rebar3}}
     strategy:
       matrix:
-        otp: ['23.3', '24.3', '25.3', '26.0.2']
+        otp: ['23.3.4.19', '24.3.4.14', '25.3.2.6', '26.0.2']
         rebar3: ['3.22.1']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{matrix.otp}}
           rebar3-version: ${{matrix.rebar3}}
+          version-type: strict
       - run: rebar3 compile
       - run: rebar3 ct
